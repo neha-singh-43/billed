@@ -100,7 +100,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activePet, setActivePet] = useState<string>(() => {
     return localStorage.getItem("activeMascot") || "codex";
   });
-  const [windowLabel, setWindowLabel] = useState<string>(() => {
+  const [windowLabel] = useState<string>(() => {
     try {
       return getCurrentWindow().label;
     } catch (e) {

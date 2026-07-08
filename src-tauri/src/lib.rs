@@ -11,6 +11,14 @@ struct WindowState {
     last_blur_time: AtomicU64,
 }
 
+fn get_cursor_token_from_conn(conn: &rusqlite::Connection) -> Result<String, String> {
+    let mut stmt = conn.prepare("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
+        .map_err(|e| format!("Failed to prepare SQL statement: {}", e))?;
+    let token: String = stmt.query_row([], |row| row.get(0))
+        .map_err(|e| format!("Could not retrieve Cursor access token from database: {}", e))?;
+    Ok(token)
+}
+
 fn get_cursor_token() -> Result<String, String> {
     // 1. Get home dir
     let home = std::env::var("HOME").map_err(|_| "Could not find HOME environment variable".to_string())?;
@@ -28,13 +36,7 @@ fn get_cursor_token() -> Result<String, String> {
     ).map_err(|e| format!("Failed to open Cursor database: {}", e))?;
     
     // 4. Query token
-    let mut stmt = conn.prepare("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
-        .map_err(|e| format!("Failed to prepare SQL statement: {}", e))?;
-    
-    let token: String = stmt.query_row([], |row| row.get(0))
-        .map_err(|e| format!("Could not retrieve Cursor access token from database: {}", e))?;
-        
-    Ok(token)
+    get_cursor_token_from_conn(&conn)
 }
 
 fn get_user_id_from_jwt(token: &str) -> Result<String, String> {
@@ -133,6 +135,9 @@ fn get_opencode_usage() -> Result<serde_json::Value, String> {
     let conn = rusqlite::Connection::open(&db_path)
         .map_err(|e| format!("Failed to open opencode.db: {}", e))?;
         
+    get_opencode_usage_from_conn(&conn)
+}
+fn get_opencode_usage_from_conn(conn: &rusqlite::Connection) -> Result<serde_json::Value, String> {
     let mut stmt = conn.prepare(
         "SELECT data FROM event WHERE type='message.updated.1' AND json_extract(data, '$.info.role')='assistant' AND json_extract(data, '$.info.time.completed') IS NOT NULL"
     ).map_err(|e| format!("Failed to prepare query: {}", e))?;
@@ -341,6 +346,75 @@ mod tests {
         let result = get_user_id_from_jwt(mock_jwt);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "user_12345");
+    }
+
+    #[test]
+    
+
+    #[test]
+    fn test_get_cursor_token_from_conn() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute(
+            "CREATE TABLE ItemTable (key TEXT PRIMARY KEY, value TEXT)",
+            (),
+        ).unwrap();
+        
+        conn.execute(
+            "INSERT INTO ItemTable (key, value) VALUES ('cursorAuth/accessToken', 'fake_cursor_token')",
+            (),
+        ).unwrap();
+
+        let token = get_cursor_token_from_conn(&conn).unwrap();
+        assert_eq!(token, "fake_cursor_token");
+    }
+
+    #[test]
+    fn test_get_cursor_token_from_conn_missing() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute(
+            "CREATE TABLE ItemTable (key TEXT PRIMARY KEY, value TEXT)",
+            (),
+        ).unwrap();
+
+        let result = get_cursor_token_from_conn(&conn);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    
+    #[test]
+    fn test_get_opencode_usage_from_conn() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute(
+            "CREATE TABLE event (type TEXT, data TEXT)",
+            (),
+        ).unwrap();
+        
+        let fake_json = serde_json::json!({
+            "info": {
+                "role": "assistant",
+                "time": { "completed": 123456789 },
+                "modelID": "fake-model",
+                "tokens": {
+                    "input": 100,
+                    "output": 50
+                }
+            }
+        });
+        
+        conn.execute(
+            "INSERT INTO event (type, data) VALUES ('message.updated.1', ?1)",
+            [fake_json.to_string()],
+        ).unwrap();
+
+        let result = get_opencode_usage_from_conn(&conn).unwrap();
+        
+        println!("RESULT: {}", result);
+        let events = result["events"]["usageEventsDisplay"].as_array().unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0]["tokenUsage"]["inputTokens"].as_i64().unwrap(), 100);
+        assert_eq!(events[0]["tokenUsage"]["outputTokens"].as_i64().unwrap(), 50);
+        assert_eq!(events[0]["model"].as_str().unwrap(), "fake-model");
     }
 
     #[test]
