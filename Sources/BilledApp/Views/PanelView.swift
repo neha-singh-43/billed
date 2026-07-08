@@ -18,15 +18,14 @@ struct PanelView: View {
     private var mainPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-            Divider()
             if model.selectedProvider.hasRealData {
                 usageContent
             } else {
                 providerPlaceholder
             }
-            Divider()
             footer
         }
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var usageContent: some View {
@@ -47,53 +46,109 @@ struct PanelView: View {
                     modelsSection
                 }
             }
-            .padding(16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 12) {
+                providerBadge
+                Spacer()
+                refreshButton
+            }
             providerTabs
-            Picker("Range", selection: $model.selectedRange) {
-                ForEach(UsageRange.allCases) { range in
-                    Text(range.title).tag(range)
-                }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Usage range")
-            .onChange(of: model.selectedRange) { _, _ in
-                Task { await model.menuBarMetricChanged() }
-            }
-            lastUpdatedText
+            rangePicker
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    private var providerBadge: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor.opacity(0.16))
+                Image(systemName: model.selectedProvider.iconName)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .frame(width: 34, height: 34)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(model.selectedProvider.displayName)
+                    .font(.headline.weight(.semibold))
+                lastUpdatedText
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var refreshButton: some View {
+        Group {
+            if model.isRefreshing {
+                ProgressView()
+                    .controlSize(.small)
+                    .frame(width: 28, height: 28)
+            } else {
+                Button {
+                    Task { await model.refresh() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 13, weight: .semibold))
+                        .frame(width: 28, height: 28)
+                        .background(Color.secondary.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .help("Refresh usage data")
+                .accessibilityLabel("Refresh")
+            }
+        }
+    }
+
+    private var rangePicker: some View {
+        Picker("Range", selection: $model.selectedRange) {
+            ForEach(UsageRange.allCases) { range in
+                Text(range.title).tag(range)
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityLabel("Usage range")
+        .onChange(of: model.selectedRange) { _, _ in
+            Task { await model.menuBarMetricChanged() }
+        }
     }
 
     private var providerTabs: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 4) {
             ForEach(ServiceProvider.allCases) { provider in
                 let isEnabled = model.isProviderEnabled(provider)
                 Button {
                     model.selectedProvider = provider
                 } label: {
-                    HStack(spacing: 3) {
+                    HStack(spacing: 5) {
+                        Image(systemName: provider.iconName)
+                            .font(.system(size: 10, weight: .medium))
                         Text(provider.displayName)
-                            .font(.system(size: 10, weight: model.selectedProvider == provider ? .semibold : .regular))
+                            .font(.system(size: 10, weight: model.selectedProvider == provider ? .semibold : .medium))
                             .lineLimit(1)
                         if !isEnabled {
                             Image(systemName: "line.diagonal")
                                 .font(.system(size: 7))
-                        }
+                            }
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
                 }
                 .buttonStyle(.plain)
                 .background(
                     model.selectedProvider == provider
-                        ? Color.accentColor.opacity(0.15)
-                        : Color.clear,
-                    in: RoundedRectangle(cornerRadius: 5)
+                        ? Color.accentColor.opacity(0.18)
+                        : Color.secondary.opacity(0.08),
+                    in: RoundedRectangle(cornerRadius: 8)
                 )
                 .foregroundStyle(
                     provider.isAvailable
@@ -105,19 +160,6 @@ struct PanelView: View {
                 .help(provider.isAvailable
                     ? (isEnabled ? "\(provider.displayName)" : "\(provider.displayName) · disabled in settings")
                     : "\(provider.displayName) not available")
-            }
-            Spacer(minLength: 4)
-            if model.isRefreshing {
-                ProgressView().controlSize(.small)
-            } else {
-                Button {
-                    Task { await model.refresh() }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.plain)
-                .help("Refresh usage data")
-                .accessibilityLabel("Refresh")
             }
         }
     }
@@ -414,7 +456,12 @@ struct PanelView: View {
 
     private var footer: some View {
         HStack {
-            Button("Settings…") { model.showSettings = true }
+            Button {
+                model.showSettings = true
+            } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
+            .buttonStyle(.plain)
             Spacer()
             Toggle("Launch at login", isOn: Binding(
                 get: { model.preferences.launchAtLogin },
@@ -422,11 +469,18 @@ struct PanelView: View {
             ))
             .toggleStyle(.checkbox)
             .controlSize(.small)
-            Button("Quit") { NSApplication.shared.terminate(nil) }
+            Button {
+                NSApplication.shared.terminate(nil)
+            } label: {
+                Label("Quit", systemImage: "power")
+            }
+            .buttonStyle(.plain)
                 .keyboardShortcut("q")
         }
-        .padding(12)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
         .font(.caption)
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 }
 
