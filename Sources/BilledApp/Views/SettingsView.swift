@@ -170,15 +170,19 @@ struct SettingsView: View {
     private var refreshSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionTitle("Refresh")
-            Stepper(
-                "Interval: \(model.preferences.refreshIntervalMinutes) min",
-                value: Binding(
-                    get: { model.preferences.refreshIntervalMinutes },
-                    set: { model.preferences.refreshIntervalMinutes = $0 }
-                ),
-                in: 60...240,
-                step: 15
-            )
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Interval: \(model.preferences.refreshIntervalMinutes) min")
+                    .font(.caption)
+                Slider(
+                    value: Binding(
+                        get: { Double(model.preferences.refreshIntervalMinutes) },
+                        set: { model.preferences.refreshIntervalMinutes = Int($0) }
+                    ),
+                    in: 60...240,
+                    step: 15
+                )
+                .accessibilityLabel("Refresh interval")
+            }
             Text("Dashboard endpoints are unofficial; 60 min minimum.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

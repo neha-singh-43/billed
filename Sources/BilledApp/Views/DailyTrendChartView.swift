@@ -6,48 +6,37 @@ struct DailyTrendChartView: View {
     let points: [DailyTrendPoint]
     let metric: AppModel.TrendMetric
 
-    private var hasData: Bool {
-        points.contains { $0.eventCount > 0 }
-    }
-
     var body: some View {
-        if !hasData {
-            Text("No daily data in this range")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
-        } else {
-            Chart(points) { point in
-                BarMark(
-                    x: .value("Day", point.day, unit: .day),
-                    y: .value(yAxisLabel, yValue(for: point))
-                )
-                .foregroundStyle(Color.accentColor.gradient)
-                .cornerRadius(3)
+        Chart(points) { point in
+            BarMark(
+                x: .value("Day", point.day, unit: .day),
+                y: .value(yAxisLabel, yValue(for: point))
+            )
+            .foregroundStyle(Color.accentColor.gradient)
+            .cornerRadius(3)
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: min(points.count, 7))) { _ in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                    .foregroundStyle(Color.secondary.opacity(0.25))
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day(), centered: true)
             }
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: min(points.count, 7))) { _ in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.secondary.opacity(0.25))
-                    AxisValueLabel(format: .dateTime.month(.abbreviated).day(), centered: true)
-                }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.secondary.opacity(0.25))
-                    AxisValueLabel {
-                        if let doubleValue = value.as(Double.self) {
-                            Text(formatYAxis(doubleValue))
-                                .font(.caption2)
-                        }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                    .foregroundStyle(Color.secondary.opacity(0.25))
+                AxisValueLabel {
+                    if let doubleValue = value.as(Double.self) {
+                        Text(formatYAxis(doubleValue))
+                            .font(.caption2)
                     }
                 }
             }
-            .frame(height: 130)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(accessibilitySummary)
         }
+        .frame(height: 130)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilitySummary)
     }
 
     private var yAxisLabel: String {

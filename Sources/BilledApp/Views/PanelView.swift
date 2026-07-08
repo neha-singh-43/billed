@@ -353,13 +353,7 @@ struct PanelView: View {
         return VStack(alignment: .leading, spacing: 8) {
             Text("Time of day")
                 .font(.subheadline.weight(.semibold))
-            if peak == 0 {
-                Text("No usage in this range")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                HourHeatmapView(activity: activity, peak: peak)
-            }
+            HourHeatmapView(activity: activity, peak: peak)
         }
     }
 
