@@ -100,7 +100,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activePet, setActivePet] = useState<string>(() => {
     return localStorage.getItem("activeMascot") || "codex";
   });
-  const [windowLabel, setWindowLabel] = useState<string>("main");
+  const [windowLabel, setWindowLabel] = useState<string>(() => {
+    try {
+      return getCurrentWindow().label;
+    } catch (e) {
+      return "main";
+    }
+  });
   const [appMode, setAppMode] = useState<AppMode>("Opencode");
   const prevEventsCount = useRef<number | null>(null);
 
@@ -158,12 +164,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
     window.addEventListener("storage", handleStorageChange);
-
-    try {
-      setWindowLabel(getCurrentWindow().label);
-    } catch (e) {
-      console.error("Failed to get window label", e);
-    }
 
     return () => {
       clearInterval(pollInterval);

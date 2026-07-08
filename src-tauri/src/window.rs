@@ -1,4 +1,5 @@
 use tauri::{webview::WebviewWindowBuilder, AppHandle, WebviewUrl};
+use tauri::window::{Effect, EffectState, EffectsBuilder};
 
 pub fn setup_window(app: &AppHandle) -> Result<tauri::webview::WebviewWindow, tauri::Error> {
     WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
@@ -12,6 +13,12 @@ pub fn setup_window(app: &AppHandle) -> Result<tauri::webview::WebviewWindow, ta
         .always_on_top(true)
         .title_bar_style(tauri::TitleBarStyle::Overlay)
         .transparent(true)
+        .effects(
+            EffectsBuilder::new()
+                .effect(Effect::Popover)
+                .state(EffectState::Active)
+                .build()
+        )
         .build()
 }
 
