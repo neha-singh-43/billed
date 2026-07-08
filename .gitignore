@@ -1,0 +1,16 @@
+# Secrets — never commit
+.env
+*.local
+*.local.json
+*secret*
+*credential*
+
+# macOS
+.DS_Store
+
+# Xcode / Swift (for when the app target lands)
+.build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint

@@ -1,0 +1,24 @@
+Internal Use Only
+
+Copyright (c) 2026
+
+This software ("Billed") is an internal tool intended solely for use
+by employees of this company on company-managed or personal Macs in the course
+of their work. It is not licensed for public release, redistribution outside the
+company, sale, or sublicensing.
+
+IMPORTANT — third-party services:
+
+Billed reads usage data from unofficial cursor.com dashboard endpoints
+using the signed-in user's own session credential. These endpoints are not a
+supported, documented API. Use of this tool may be subject to Cursor's Terms of
+Service, and the endpoints may change or stop working without notice. Each user
+is responsible for ensuring their use complies with any applicable agreements.
+This tool is not affiliated with, endorsed by, or supported by Cursor / Anysphere.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
