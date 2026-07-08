@@ -359,11 +359,16 @@ function App() {
   const summary = data?.summary;
   const events = data?.events?.usageEventsDisplay || [];
 
+  const parseDate = (val: string | number) => {
+    if (!val) return new Date();
+    const num = Number(val);
+    return isNaN(num) ? new Date(val) : new Date(num);
+  };
+
   // Filter events based on selected Range
   const now = new Date();
   const filteredEvents = events.filter((evt) => {
-    const numTime = Number(evt.timestamp);
-    const evtDate = isNaN(numTime) ? new Date(evt.timestamp) : new Date(numTime);
+    const evtDate = parseDate(evt.timestamp);
     if (isNaN(evtDate.getTime())) return false;
 
     if (range === "Today") {
@@ -378,8 +383,8 @@ function App() {
       return evtDate >= thirtyDaysAgo;
     }
     if (range === "Cycle" && summary) {
-      const start = new Date(summary.billingCycleStart);
-      const end = new Date(summary.billingCycleEnd);
+      const start = parseDate(summary.billingCycleStart);
+      const end = parseDate(summary.billingCycleEnd);
       return evtDate >= start && evtDate <= end;
     }
     return true;
@@ -405,8 +410,7 @@ function App() {
       headlessRequests++;
     }
     
-    const numTime = Number(evt.timestamp);
-    const date = isNaN(numTime) ? new Date(evt.timestamp) : new Date(numTime);
+    const date = parseDate(evt.timestamp);
     if (!isNaN(date.getTime())) {
       const dateKey = date.toDateString();
       const hour = date.getHours();
@@ -472,14 +476,16 @@ function App() {
   // Projected Spend
   let projectedSpend = "$0.00";
   if (summary) {
-    const start = new Date(summary.billingCycleStart).getTime();
-    const end = new Date(summary.billingCycleEnd).getTime();
+    const startObj = parseDate(summary.billingCycleStart);
+    const endObj = parseDate(summary.billingCycleEnd);
+    const start = startObj.getTime();
+    const end = endObj.getTime();
     const totalDuration = end - start;
     const elapsed = now.getTime() - start;
 
     if (elapsed > 0 && totalDuration > 0) {
       const currentCents = events.reduce((acc, evt) => {
-        const t = parseInt(evt.timestamp, 10);
+        const t = parseDate(evt.timestamp).getTime();
         if (t >= start && t <= end) {
           return acc + evt.chargedCents;
         }
@@ -494,8 +500,8 @@ function App() {
   const trendPoints: { xLabel: string; value: number; rawValue: number }[] = [];
   
   if (summary) {
-    const start = new Date(summary.billingCycleStart);
-    const end = new Date(summary.billingCycleEnd);
+    const start = parseDate(summary.billingCycleStart);
+    const end = parseDate(summary.billingCycleEnd);
     
     // Create points for every 2 days across the cycle to avoid cluttering, or group by day
     const dayMs = 24 * 60 * 60 * 1000;
