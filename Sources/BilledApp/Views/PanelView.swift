@@ -248,16 +248,50 @@ struct PanelView: View {
     private var metricsSection: some View {
         let metrics = model.currentMetrics
         return VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Current usage")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                HStack(alignment: .lastTextBaseline, spacing: 8) {
+                    Text(UsageFormatters.compactCount(metrics.tokens.total))
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .minimumScaleFactor(0.75)
+                        .lineLimit(1)
+                    Text("tokens")
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                HStack(spacing: 8) {
+                    SummaryChip(
+                        label: "Cost",
+                        value: UsageFormatters.dollars(fromCents: metrics.chargedCents),
+                        systemImage: "creditcard"
+                    )
+                    SummaryChip(
+                        label: "Requests",
+                        value: "\(metrics.eventCount)",
+                        systemImage: "bubble.left.and.text.bubble.right"
+                    )
+                }
+            }
+            .padding(14)
+            .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+
+            HStack(spacing: 10) {
                 MetricCard(
-                    title: "Tokens",
-                    value: UsageFormatters.compactCount(metrics.tokens.total),
-                    subtitle: "\(metrics.eventCount) requests"
+                    title: "Cache read",
+                    value: UsageFormatters.compactCount(metrics.tokens.cacheRead),
+                    subtitle: UsageFormatters.percent(metrics.tokens.cacheRead, of: max(metrics.tokens.total, 1)),
+                    systemImage: "tray.and.arrow.down"
                 )
                 MetricCard(
-                    title: "Cost",
-                    value: UsageFormatters.dollars(fromCents: metrics.chargedCents),
-                    subtitle: costSubtitle
+                    title: "Average",
+                    value: UsageFormatters.dollars(fromCents: metrics.averageCentsPerRequest),
+                    subtitle: "per request",
+                    systemImage: "chart.line.uptrend.xyaxis"
                 )
             }
             if let summary = model.summary, model.selectedRange == .cycle {
@@ -283,15 +317,9 @@ struct PanelView: View {
                         .accessibilityLabel("Projected cycle spend \(UsageFormatters.dollars(fromCents: projected))")
                     }
                 }
+                .padding(.horizontal, 2)
             }
         }
-    }
-
-    private var costSubtitle: String {
-        if let summary = model.summary, let onDemand = summary.onDemandUsed {
-            return "On-demand: \(UsageFormatters.dollars(fromCents: onDemand))"
-        }
-        return "Sum of chargedCents"
     }
 
     private func cycleText(_ summary: UsageSummarySnapshot) -> String {
@@ -488,12 +516,19 @@ struct MetricCard: View {
     let title: String
     let value: String
     let subtitle: String
+    let systemImage: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Image(systemName: systemImage)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
             Text(value)
                 .font(.title2.weight(.semibold))
                 .monospacedDigit()
@@ -506,9 +541,29 @@ struct MetricCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value). \(subtitle)")
+    }
+}
+
+struct SummaryChip: View {
+    let label: String
+    let value: String
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            Text("\(label) \(value)")
+                .font(.caption.weight(.medium))
+                .monospacedDigit()
+        } icon: {
+            Image(systemName: systemImage)
+        }
+        .padding(.horizontal, 9)
+        .padding(.vertical, 6)
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.8), in: RoundedRectangle(cornerRadius: 8))
+        .accessibilityElement(children: .combine)
     }
 }
 
