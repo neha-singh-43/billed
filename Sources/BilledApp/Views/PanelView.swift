@@ -53,7 +53,31 @@ struct PanelView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            providerTabs
+              HStack {
+                Toggle("Launch at login", isOn: Binding(
+                    get: { model.preferences.launchAtLogin },
+                    set: { model.setLaunchAtLogin($0) }
+                ))
+                .toggleStyle(.checkbox)
+                .controlSize(.small)
+                Spacer()
+                Button {
+                    model.showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .padding(.trailing, 6)
+                .buttonStyle(.plain)
+                .help("Settings…")
+                Button {
+                    NSApplication.shared.terminate(nil)
+                } label: {
+                    Image(systemName: "power")
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("q")
+                .help("Quit")
+            }
             Picker("Range", selection: $model.selectedRange) {
                 ForEach(UsageRange.allCases) { range in
                     Text(range.title).tag(range)
@@ -407,17 +431,8 @@ struct PanelView: View {
     }
 
     private var footer: some View {
-        HStack {
-            Button("Settings…") { model.showSettings = true }
-            Spacer()
-            Toggle("Launch at login", isOn: Binding(
-                get: { model.preferences.launchAtLogin },
-                set: { model.setLaunchAtLogin($0) }
-            ))
-            .toggleStyle(.checkbox)
-            .controlSize(.small)
-            Button("Quit") { NSApplication.shared.terminate(nil) }
-                .keyboardShortcut("q")
+        VStack(spacing: 12) {
+            providerTabs
         }
         .padding(12)
         .font(.caption)
@@ -607,3 +622,17 @@ struct HourHeatmapView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Panel – loaded") {
+    PanelView(model: AppModel.sample())
+        .frame(width: 360, height: 560)
+}
+
+#Preview("Panel – settings") {
+    let m = AppModel.sample()
+    m.showSettings = true
+    return PanelView(model: m)
+        .frame(width: 360, height: 560)
+}
+#endif

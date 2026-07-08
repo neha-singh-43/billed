@@ -69,6 +69,14 @@ final class AppModel {
         Task { await bootstrap() }
     }
 
+#if DEBUG
+    /// Preview-only initialiser that skips all async data fetching so the
+    /// Xcode canvas can render synchronously with injected sample data.
+    init(_preview: Void) {
+        // Intentionally skip `Task { await bootstrap() }`
+    }
+#endif
+
     func bootstrap() async {
         let provider = selectedProvider
         guard let source = dataSources[provider] else {
