@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { emit, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 
 // Import locally copied spritesheets
@@ -162,151 +161,25 @@ function Mascot({ petId, width = "22px", height = "24px" }: MascotProps) {
   );
 }
 
-interface PlanUsage {
-  enabled: boolean;
-  used: number;
-  limit: number;
-  remaining: number;
-  breakdown: {
-    included: number;
-    bonus: number;
-    total: number;
-  };
-  autoPercentUsed: number;
-  apiPercentUsed: number;
-  totalPercentUsed: number;
-}
-
-interface UsageSummary {
-  billingCycleStart: string;
-  billingCycleEnd: string;
-  membershipType: string;
-  limitType: string;
-  isUnlimited: boolean;
-  autoModelSelectedDisplayMessage: string;
-  namedModelSelectedDisplayMessage: string;
-  individualUsage: {
-    plan?: PlanUsage;
-    onDemand?: {
-      enabled: boolean;
-      used: number;
-      limit: number | null;
-      remaining: number | null;
-    };
-  };
-}
-
-interface UsageEvent {
-  timestamp: string;
-  model: string;
-  kind: string;
-  requestsCosts: number;
-  isTokenBasedCall: boolean;
-  tokenUsage?: {
-    inputTokens: number;
-    outputTokens: number;
-    cacheReadTokens: number;
-    totalCents: number;
-  };
-  isHeadless: boolean;
-  chargedCents: number;
-  conversationId?: string;
-}
-
-interface UsageEventsResponse {
-  totalUsageEventsCount: number;
-  usageEventsDisplay?: UsageEvent[];
-}
-
-interface BackendResponse {
-  summary: UsageSummary;
-  events: UsageEventsResponse;
-}
-
-type RangeType = "Today" | "7D" | "30D" | "Cycle";
-type TrendType = "Tokens" | "Cost";
+import { useAppState, RangeType, TrendType } from "./AppContext";
 
 function App() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<BackendResponse | null>(null);
-  const [range, setRange] = useState<RangeType>("Cycle");
-  const [trendType, setTrendType] = useState<TrendType>("Tokens");
-  const [launchAtLogin, setLaunchAtLogin] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [activePet, setActivePet] = useState<string>(() => {
-    return localStorage.getItem("activeMascot") || "codex";
-  });
-  const [windowLabel, setWindowLabel] = useState<string>("main");
-  const [appMode, _setAppMode] = useState<"Cursor" | "Opencode">("Opencode");
-  const prevEventsCount = useRef<number | null>(null);
-
-  const fetchUsage = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const cmd = appMode === "Cursor" ? "get_cursor_usage" : "get_opencode_usage";
-      const result = await invoke<BackendResponse>(cmd);
-      setData(result);
-      setLastUpdated(new Date());
-
-      const currentCount = result.events?.totalUsageEventsCount || 0;
-      if (prevEventsCount.current !== null && currentCount > prevEventsCount.current) {
-        emit("cursor-agent-status", { state: "running" });
-        setTimeout(() => {
-          emit("cursor-agent-status", { state: "jumping" });
-        }, 3000);
-      }
-      prevEventsCount.current = currentCount;
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.toString() || `Failed to fetch ${appMode} usage stats`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsage();
-  }, [appMode]);
-
-  useEffect(() => {
-    const pollInterval = setInterval(() => {
-      const cmd = appMode === "Cursor" ? "get_cursor_usage" : "get_opencode_usage";
-      invoke<BackendResponse>(cmd)
-        .then((result) => {
-          setData(result);
-          setLastUpdated(new Date());
-          const currentCount = result.events?.totalUsageEventsCount || 0;
-          if (prevEventsCount.current !== null && currentCount > prevEventsCount.current) {
-            emit("cursor-agent-status", { state: "running" });
-            setTimeout(() => {
-              emit("cursor-agent-status", { state: "jumping" });
-            }, 3000);
-          }
-          prevEventsCount.current = currentCount;
-        })
-        .catch((err) => console.error("Poll usage error", err));
-    }, 8000);
-    
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "activeMascot" && e.newValue) {
-        setActivePet(e.newValue);
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    try {
-      setWindowLabel(getCurrentWindow().label);
-    } catch (e) {
-      console.error("Failed to get window label", e);
-    }
-
-    return () => {
-      clearInterval(pollInterval);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [appMode]);
+  const {
+    loading,
+    error,
+    data,
+    range,
+    setRange,
+    trendType,
+    setTrendType,
+    launchAtLogin,
+    setLaunchAtLogin,
+    lastUpdated,
+    activePet,
+    setActivePet,
+    windowLabel,
+    fetchUsage,
+  } = useAppState();
 
   useEffect(() => {
     if (windowLabel !== "main") return;

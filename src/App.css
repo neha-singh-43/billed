@@ -1,3 +1,6 @@
+
+
+
 /* CSS Design Tokens matching the screenshot precisely */
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -14,12 +17,52 @@
   --text-muted: #626260;
   
   --accent-blue: #0a84ff;
+
+  --border-focus: rgba(255, 255, 255, 0.2);
+  --border-active: rgba(255, 255, 255, 0.4);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-lighter: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.02);
+  --bg-control: #252523;
+  --bg-checkbox: #2c2c2a;
+  --shadow-primary: rgba(0, 0, 0, 0.6);
+  --shadow-glow: rgba(10, 132, 255, 0.4);
+  --bg-overlay: rgba(255, 255, 255, 0.03);
+
   
   /* Token Split Segment Colors */
   --color-in: #0099ff;
   --color-out: #30d158;
   --color-cache-w: #ff9f0a;
   --color-cache-r: #bf5af2;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-app: #f5f5f5;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f0f0f0;
+    --bg-control: #e0e0e0;
+    --bg-checkbox: #ffffff;
+    
+    --border-card: rgba(0, 0, 0, 0.06);
+    --border-divider: rgba(0, 0, 0, 0.08);
+    --border-focus: rgba(0, 0, 0, 0.2);
+    --border-active: rgba(0, 0, 0, 0.3);
+    --border-light: rgba(0, 0, 0, 0.08);
+    --border-lighter: rgba(0, 0, 0, 0.1);
+    --border-overlay: rgba(0, 0, 0, 0.05);
+    --border-subtle: rgba(0, 0, 0, 0.04);
+    
+    --text-primary: #1c1c1e;
+    --text-secondary: #6c6c70;
+    --text-muted: #8e8e93;
+    
+    --shadow-primary: rgba(0, 0, 0, 0.1);
+    --shadow-glow: rgba(0, 122, 255, 0.3);
+    
+    --bg-overlay: rgba(0, 0, 0, 0.04);
+  }
 }
 
 /* Reset */
@@ -43,12 +86,12 @@ body {
   width: 360px;
   height: auto;
   background: var(--bg-app);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-light);
   border-radius: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 
-              inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px var(--shadow-primary), 
+              inset 0 1px 1px var(--border-lighter);
   overflow: hidden;
 }
 
@@ -90,14 +133,14 @@ body {
   transform: translateY(-50%);
   height: 14px;
   width: 14px;
-  background-color: #2c2c2a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: var(--bg-checkbox);
+  border: 1px solid var(--border-focus);
   border-radius: 3px;
   transition: all 0.2s ease;
 }
 
 .checkbox-container:hover input ~ .checkmark {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--border-active);
 }
 
 .checkbox-container input:checked ~ .checkmark {
@@ -135,8 +178,8 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-overlay);
   padding: 1px 6px 1px 2px;
   border-radius: 9999px;
   height: 24px;
@@ -207,10 +250,10 @@ body {
 
 .segmented-control {
   display: flex;
-  background: #252523;
+  background: var(--bg-control);
   padding: 2px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
 }
 
 .segment-btn {
@@ -360,7 +403,7 @@ body {
   display: flex;
   width: 100%;
   height: 7px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border-overlay);
   border-radius: 9999px;
   overflow: hidden;
   gap: 2px; /* Small separator spacing */
@@ -458,7 +501,7 @@ body {
 }
 
 .segmented-control.tiny {
-  background: #252523;
+  background: var(--bg-control);
   padding: 1px;
 }
 
@@ -522,7 +565,7 @@ body {
 
 .hour-block {
   flex: 1;
-  background: #252523;
+  background: var(--bg-control);
   border-radius: 2px;
   height: 100%;
   transition: background 0.3s ease;
@@ -530,7 +573,7 @@ body {
 
 .hour-block.active {
   background-color: var(--accent-blue);
-  box-shadow: 0 0 6px rgba(10, 132, 255, 0.4);
+  box-shadow: 0 0 6px var(--shadow-glow);
 }
 
 .hours-labels {
@@ -558,8 +601,8 @@ body {
   font-size: 10px;
   font-weight: 600;
   color: var(--text-primary);
-  background: #252523;
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--bg-control);
+  border: 1px solid var(--border-light);
   padding: 2px 8px;
   border-radius: 6px;
   display: flex;
@@ -605,7 +648,7 @@ body {
 .model-progress-bg {
   width: 100%;
   height: 4px;
-  background: rgba(255,255,255,0.04);
+  background: var(--border-card);
   border-radius: 9999px;
   overflow: hidden;
 }
@@ -623,10 +666,10 @@ body {
 
 .mode-toggle {
   display: flex;
-  background: #252523;
+  background: var(--bg-control);
   padding: 2px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-card);
   gap: 2px;
 }
 
@@ -706,7 +749,7 @@ body {
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--border-lighter);
   border-top-color: var(--accent-blue);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
