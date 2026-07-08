@@ -157,6 +157,7 @@ public actor AntigravityProvider: ProviderDataSource {
     private var _summary: UsageSummarySnapshot?
     private var _events: [UsageEvent] = []
     private var _lastUpdated: Date?
+    private var _modelName: String?
 
     public init(
         globalStateURL: URL = FileManager.default.homeDirectoryForCurrentUser
@@ -173,10 +174,12 @@ public actor AntigravityProvider: ProviderDataSource {
         }
 
         let status = readGlobalStateValue(forKey: "antigravityUnifiedStateSync.userStatus")
+        let modelName = Self.firstModelName(inBase64Payload: status)
+        if let modelName { _modelName = modelName }
         return AuthStatus(
             source: .localApp,
             email: Self.firstEmail(inBase64Payload: status),
-            membershipType: Self.firstModelName(inBase64Payload: status)
+            membershipType: modelName
         )
     }
 
@@ -186,6 +189,10 @@ public actor AntigravityProvider: ProviderDataSource {
 
     public func refresh(forceFullWindow _: Bool = false) async throws -> Date {
         let now = Date()
+        if _modelName == nil {
+            let status = readGlobalStateValue(forKey: "antigravityUnifiedStateSync.userStatus")
+            _modelName = Self.firstModelName(inBase64Payload: status)
+        }
         let events = try readFinishedAgentEvents()
         let dates = events.map(\.timestamp)
         let cycleStart = dates.min() ?? now
@@ -193,7 +200,7 @@ public actor AntigravityProvider: ProviderDataSource {
         _summary = UsageSummarySnapshot(
             cycleStart: cycleStart,
             cycleEnd: cycleEnd,
-            membershipType: "Antigravity",
+            membershipType: _modelName ?? "Antigravity",
             limitType: "individual"
         )
         _events = events
@@ -233,7 +240,7 @@ public actor AntigravityProvider: ProviderDataSource {
 
             events.append(UsageEvent(
                 timestamp: timestamp,
-                model: "Antigravity",
+                model: _modelName ?? "Antigravity",
                 kind: .includedInSubscription,
                 isTokenBased: false,
                 isHeadless: true,
@@ -286,7 +293,20 @@ public actor AntigravityProvider: ProviderDataSource {
 
     private nonisolated static func firstModelName(inBase64Payload payload: String?) -> String? {
         guard let text = decodedText(fromBase64Payload: payload) else { return nil }
-        let candidates = ["Gemini 3.5 Flash", "Gemini 3.1 Pro", "Gemini 3.5 Pro", "Gemini"]
+        let candidates = [
+            "Claude Sonnet 4.6 (Thinking)",
+            "Claude Opus 4.6 (Thinking)",
+            "GPT-OSS 120B (Medium)",
+            "Gemini 3.5 Flash (Medium)",
+            "Gemini 3.5 Flash (High)",
+            "Gemini 3.5 Flash (Low)",
+            "Gemini 3.1 Pro (Low)",
+            "Gemini 3.1 Pro (High)",
+            "Gemini 3.5 Pro",
+            "Gemini 3.5 Flash",
+            "Gemini 3.1 Pro",
+            "Gemini",
+        ]
         return candidates.first { text.contains($0) }
     }
 
