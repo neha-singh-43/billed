@@ -338,15 +338,41 @@ function App() {
     );
   }
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return "";
-    const num = Number(dateStr);
-    const date = isNaN(num) ? new Date(dateStr) : new Date(num);
+  const formatDate = (dateInput?: string | number | Date) => {
+    if (!dateInput) return "";
+    const date = dateInput instanceof Date ? dateInput : parseDate(dateInput);
     return date.toLocaleDateString("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
+  };
+
+  const getRangeLabel = () => {
+    if (range === "Cycle") return "Billing cycle";
+    if (range === "Today") return "Today";
+    if (range === "7D") return "Last 7 Days";
+    if (range === "30D") return "Last 30 Days";
+    return "Period";
+  };
+
+  const getRangeDates = () => {
+    if (range === "Cycle" && summary) {
+      return `${formatDate(summary.billingCycleStart)} – ${formatDate(summary.billingCycleEnd)}`;
+    }
+    const today = new Date();
+    if (range === "Today") {
+      return formatDate(today);
+    }
+    if (range === "7D") {
+      const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return `${formatDate(sevenDaysAgo)} – ${formatDate(today)}`;
+    }
+    if (range === "30D") {
+      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return `${formatDate(thirtyDaysAgo)} – ${formatDate(today)}`;
+    }
+    return "";
   };
 
   const getUpdatedText = () => {
@@ -464,6 +490,11 @@ function App() {
   const formatCost = (cents: number) => {
     return `$${(cents / 100).toFixed(2)}`;
   };
+
+  useEffect(() => {
+    const cost = formatCost(totalCents);
+    invoke('set_tray_title', { title: cost }).catch(console.error);
+  }, [totalCents]);
 
   // Percentage Calculations
   const inPct = totalTokens > 0 ? Math.round((inputTokens / totalTokens) * 100) : 0;
@@ -654,9 +685,9 @@ function App() {
             {/* Cycle Details */}
             <div className="cycle-row">
               <div className="cycle-col">
-                <span className="cycle-lbl">Billing cycle</span>
+                <span className="cycle-lbl">{getRangeLabel()}</span>
                 <span className="cycle-val">
-                  {formatDate(summary?.billingCycleStart)} – {formatDate(summary?.billingCycleEnd)}
+                  {getRangeDates()}
                 </span>
               </div>
               <div className="cycle-col text-right">

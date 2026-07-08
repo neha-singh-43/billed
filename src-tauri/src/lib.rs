@@ -219,11 +219,19 @@ fn resize_window(window: tauri::WebviewWindow, height: f64) -> Result<(), String
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn set_tray_title(app: tauri::AppHandle, title: String) -> Result<(), String> {
+    if let Some(tray) = app.tray_by_id("tray") {
+        let _ = tray.set_title(Some(title));
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_cursor_usage, quit, resize_window, get_opencode_usage])
+        .invoke_handler(tauri::generate_handler![get_cursor_usage, quit, resize_window, get_opencode_usage, set_tray_title])
         .setup(|app| {
             // Hide the dock icon on macOS (runs as accessory menu bar app)
             #[cfg(target_os = "macos")]
