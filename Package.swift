@@ -17,7 +17,10 @@ let package = Package(
         .executableTarget(
             name: "BilledApp",
             dependencies: ["BilledCore"],
-            path: "Sources/BilledApp"
+            path: "Sources/BilledApp",
+            resources: [
+                .process("Resources/Logos")
+            ]
         ),
         .testTarget(
             name: "BilledCoreTests",
