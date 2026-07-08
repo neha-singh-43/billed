@@ -18,9 +18,10 @@ app. The panel should answer three questions quickly:
 2. How much usage happened in this range?
 3. What changed across time, activity, and models?
 
-The target aesthetic is Apple-inspired Liquid Glass: translucent layered
-surfaces, restrained depth, crisp typography, and subtle system accent color.
-Avoid decorative gradients, noisy backgrounds, and oversized promotional copy.
+The target aesthetic is the reference image above: an Apple-inspired Liquid
+Glass menu popover with translucent layered surfaces, rounded glass cards,
+crisp typography, and strong blue accent selection. The image is the visual
+authority when this document and the mockup differ.
 
 ## Layout
 
@@ -34,43 +35,43 @@ The primary surface is a floating menu bar panel.
 
 Top-to-bottom structure:
 
-1. Header
+1. Billed app header
 2. Provider tabs
-3. Range selector
-4. Hero usage summary
+3. Range selector and refresh
+4. Hero usage summary with three chips
 5. Supporting metric cards
-6. Token split
+6. Token split with detail affordance
 7. Daily trend
-8. Activity
-9. Time of day
-10. Models
-11. Footer actions
+8. Activity metric chips
+9. Time of day and Models side-by-side
+10. Footer utility row
 
 ## Header
 
 The header establishes context and should be visible at first glance.
 
-- Show an icon badge for the selected provider.
-- Show selected provider name as the title.
+- Show the Billed app badge.
+- Show `Billed` as the title.
 - Show last updated or cached state below the title.
-- Put refresh at the right as an icon button.
-- Use `Color(nsColor: .controlBackgroundColor)` or a macOS material-like
-  surface. Keep the header visually distinct from scroll content.
+- Put Settings at the top right as a circular glass icon button.
+- Put refresh with the range selector below provider tabs.
+- Use a macOS material-like surface. Keep the header visually distinct from
+  scroll content.
 
 Provider badge:
 
 - Size: 34 x 34 pt.
 - Shape: rounded rectangle, radius 8 pt.
 - Fill: accent color at low opacity.
-- Icon: SF Symbol from `ServiceProvider.iconName`, semibold, accent color.
+- Icon: `chart.bar.fill` with blue/cyan treatment on a dark rounded square.
 
 ## Provider Tabs
 
-Provider tabs are compact pills, not large navigation tabs.
+Provider tabs are a single compact segmented glass strip.
 
-- Include provider icon and display name.
-- Active tab uses accent color at low opacity.
-- Inactive available tabs use a subtle secondary fill.
+- Show provider display names.
+- Active tab uses solid system accent blue with white text.
+- Inactive available tabs sit directly on the translucent strip.
 - Disabled providers are dimmed, but still understandable.
 - Missing providers are tertiary and disabled.
 - Keep tab labels one line.
@@ -94,19 +95,19 @@ The range selector remains a native segmented control.
 
 ## Hero Usage Summary
 
-The hero summary is the first data object in the panel.
+The hero summary is the first large glass card in the panel.
 
 Content:
 
 - Eyebrow: `Current usage`
 - Primary number: compact total tokens, e.g. `12.8M`
 - Unit label: `tokens`
-- Summary chips: cost and request count
+- Summary chips: tokens, cost, and request count
 
 Style:
 
 - Use large rounded/tabular numerals.
-- Background uses accent color at low opacity.
+- Background uses a frosted glass card with a subtle white highlight stroke.
 - Keep it calm; no saturated gradients.
 - If tokens are unavailable for a provider, show `0` and let request/activity
   sections carry the provider-specific signal.
@@ -124,7 +125,7 @@ Rules:
 
 - Two cards per row.
 - Each card has an icon, muted label, strong value, and muted detail.
-- Cards use a subtle control-background fill and radius 8 pt.
+- Cards use frosted glass with a soft highlight stroke.
 - Values use monospaced digits and a one-line limit.
 
 ## Section Surfaces
@@ -139,16 +140,16 @@ Section header:
 
 Section body:
 
-- Token split: stacked bar plus compact legend.
+- Token split: tall segmented stacked bar plus compact legend.
 - Daily trend: chart plus metric picker.
-- Activity: compact two-column stat grid.
-- Time of day: 24-hour heatmap.
-- Models: sortable list with bars.
+- Activity: four compact metric chips.
+- Time of day: compact heatmap card.
+- Models: compact sortable list with bars.
 
 Surface style:
 
-- Fill: `Color(nsColor: .controlBackgroundColor)`.
-- Radius: 8 pt.
+- Fill: `.ultraThinMaterial` or closest available glass material.
+- Radius: 14-16 pt.
 - Padding: 12 pt.
 - Spacing: 10 pt inside each section.
 
@@ -174,12 +175,9 @@ Primary palette:
 - Accent: system accent color, low opacity for fills.
 - Text: primary/secondary/tertiary system foreground styles.
 
-Avoid:
-
-- Purple gradient themes.
-- Beige/tan or brown/orange palettes.
-- Dark blue/slate-heavy dashboard styling.
-- Decorative orbs, bokeh, or abstract blobs.
+Avoid beige/tan, brown/orange, purple gradient themes, and noisy abstract
+decorations. The only allowed gradient-like treatment is a subtle native panel
+backdrop that supports the glass effect.
 
 Liquid Glass direction:
 
@@ -198,18 +196,17 @@ Charts are supporting evidence, not the primary hero.
 
 ## Footer
 
-Footer actions stay compact and utility-oriented.
+Footer actions stay compact and utility-oriented, matching the concept image.
 
 Actions:
 
-- Settings
 - Launch at login
-- Quit
+- Settings
 
 Style:
 
-- Use a subtle footer surface matching the header.
-- Use icon + text for Settings and Quit.
+- Use a subtle glass surface matching the header.
+- Keep a small app glyph at the left and Settings at the right.
 - Keep font at caption size.
 
 ## Interaction Rules

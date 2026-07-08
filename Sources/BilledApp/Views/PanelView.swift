@@ -25,7 +25,17 @@ struct PanelView: View {
             }
             footer
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .windowBackgroundColor),
+                    Color.accentColor.opacity(0.08),
+                    Color(nsColor: .windowBackgroundColor)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 
     private var usageContent: some View {
@@ -42,8 +52,7 @@ struct PanelView: View {
                     tokenSplitSection
                     trendSection
                     activitySection
-                    hourHeatmapSection
-                    modelsSection
+                    bottomAnalyticsGrid
                 }
             }
             .padding(.horizontal, 16)
@@ -52,35 +61,55 @@ struct PanelView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .center, spacing: 12) {
-                providerBadge
+                appIdentity
                 Spacer()
-                refreshButton
+                Button {
+                    model.showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(width: 34, height: 34)
+                        .glassButtonBackground()
+                }
+                .buttonStyle(.plain)
+                .help("Settings")
+                .accessibilityLabel("Settings")
             }
             providerTabs
-            rangePicker
+            HStack(spacing: 10) {
+                rangePicker
+                refreshButton
+            }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 14)
+        .padding(.top, 18)
         .padding(.bottom, 12)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(.ultraThinMaterial)
     }
 
-    private var providerBadge: some View {
-        HStack(spacing: 10) {
+    private var appIdentity: some View {
+        HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.accentColor.opacity(0.16))
-                Image(systemName: model.selectedProvider.iconName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+                    .fill(.black.opacity(0.88))
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.cyan, .blue],
+                            startPoint: .bottomLeading,
+                            endPoint: .topTrailing
+                        )
+                    )
             }
-            .frame(width: 34, height: 34)
+            .frame(width: 40, height: 40)
+            .shadow(color: .black.opacity(0.16), radius: 8, y: 4)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.selectedProvider.displayName)
-                    .font(.headline.weight(.semibold))
+                Text("Billed")
+                    .font(.system(size: 25, weight: .bold, design: .rounded))
                 lastUpdatedText
             }
         }
@@ -100,7 +129,7 @@ struct PanelView: View {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 13, weight: .semibold))
                         .frame(width: 28, height: 28)
-                        .background(Color.secondary.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+                        .glassButtonBackground()
                 }
                 .buttonStyle(.plain)
                 .help("Refresh usage data")
@@ -123,45 +152,49 @@ struct PanelView: View {
     }
 
     private var providerTabs: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 0) {
             ForEach(ServiceProvider.allCases) { provider in
-                let isEnabled = model.isProviderEnabled(provider)
-                Button {
-                    model.selectedProvider = provider
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: provider.iconName)
-                            .font(.system(size: 10, weight: .medium))
-                        Text(provider.displayName)
-                            .font(.system(size: 10, weight: model.selectedProvider == provider ? .semibold : .medium))
-                            .lineLimit(1)
-                        if !isEnabled {
-                            Image(systemName: "line.diagonal")
-                                .font(.system(size: 7))
-                            }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                }
-                .buttonStyle(.plain)
-                .background(
-                    model.selectedProvider == provider
-                        ? Color.accentColor.opacity(0.18)
-                        : Color.secondary.opacity(0.08),
-                    in: RoundedRectangle(cornerRadius: 8)
-                )
-                .foregroundStyle(
-                    provider.isAvailable
-                        ? (model.selectedProvider == provider ? .primary : .secondary)
-                        : .tertiary
-                )
-                .opacity(isEnabled || model.selectedProvider == provider ? 1 : 0.5)
-                .disabled(!provider.isAvailable)
-                .help(provider.isAvailable
-                    ? (isEnabled ? "\(provider.displayName)" : "\(provider.displayName) · disabled in settings")
-                    : "\(provider.displayName) not available")
+                providerTab(provider)
             }
         }
+        .padding(3)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 11))
+        .overlay(
+            RoundedRectangle(cornerRadius: 11)
+                .stroke(.white.opacity(0.35), lineWidth: 1)
+        )
+    }
+
+    private func providerTab(_ provider: ServiceProvider) -> some View {
+        let isEnabled = model.isProviderEnabled(provider)
+        let isSelected = model.selectedProvider == provider
+        let titleWeight: Font.Weight = isSelected ? .semibold : .medium
+        let foreground: Color = provider.isAvailable ? (isSelected ? .white : .primary) : .secondary
+        let helpText = provider.isAvailable
+            ? (isEnabled ? provider.displayName : "\(provider.displayName) · disabled in settings")
+            : "\(provider.displayName) not available"
+
+        return Button {
+            model.selectedProvider = provider
+        } label: {
+            HStack(spacing: 5) {
+                Text(provider.displayName)
+                    .font(.system(size: 12, weight: titleWeight))
+                    .lineLimit(1)
+                if !isEnabled {
+                    Image(systemName: "line.diagonal")
+                        .font(.system(size: 8))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
+        .background(isSelected ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+        .foregroundStyle(foreground)
+        .opacity(isEnabled || isSelected ? 1 : 0.5)
+        .disabled(!provider.isAvailable)
+        .help(helpText)
     }
 
     private var providerPlaceholder: some View {
@@ -266,19 +299,30 @@ struct PanelView: View {
                 }
                 HStack(spacing: 8) {
                     SummaryChip(
+                        label: "Tokens",
+                        value: UsageFormatters.compactCount(metrics.tokens.total),
+                        detail: "tokens",
+                        systemImage: "arrow.triangle.2.circlepath",
+                        color: .blue
+                    )
+                    SummaryChip(
                         label: "Cost",
                         value: UsageFormatters.dollars(fromCents: metrics.chargedCents),
-                        systemImage: "creditcard"
+                        detail: "Cost",
+                        systemImage: "dollarsign",
+                        color: .green
                     )
                     SummaryChip(
                         label: "Requests",
                         value: "\(metrics.eventCount)",
-                        systemImage: "bubble.left.and.text.bubble.right"
+                        detail: "Requests",
+                        systemImage: "tray.full",
+                        color: .indigo
                     )
                 }
             }
             .padding(14)
-            .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+            .glassCardBackground(radius: 16)
 
             HStack(spacing: 10) {
                 MetricCard(
@@ -331,59 +375,66 @@ struct PanelView: View {
     private var tokenSplitSection: some View {
         let t = model.currentMetrics.tokens
         let total = max(t.total, 1)
-        return sectionSurface(title: "Token split", systemImage: "circle.hexagongrid.fill") {
+        return sectionSurface(title: "Token split", systemImage: "circle.hexagongrid.fill", accessory: "View details") {
             TokenSplitBar(tokens: t)
                 .accessibilityLabel("Token split: input \(UsageFormatters.percent(t.input, of: total)), output \(UsageFormatters.percent(t.output, of: total)), cache write \(UsageFormatters.percent(t.cacheWrite, of: total)), cache read \(UsageFormatters.percent(t.cacheRead, of: total))")
-            HStack(spacing: 12) {
-                splitLegend("In", t.input, total, .blue)
-                splitLegend("Out", t.output, total, .green)
-                splitLegend("Cache W", t.cacheWrite, total, .orange)
-                splitLegend("Cache R", t.cacheRead, total, .purple)
+            HStack(spacing: 18) {
+                splitLegend("Input", t.input, total, .blue)
+                splitLegend("Output", t.output, total, .cyan)
+                splitLegend("Cache", t.cacheWrite + t.cacheRead, total, .gray)
             }
-            .font(.caption2)
+            .font(.caption)
         }
     }
 
     private func splitLegend(_ label: String, _ value: Int, _ total: Int, _ color: Color) -> some View {
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text("\(label) \(UsageFormatters.percent(value, of: total))")
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 5) {
+                Circle().fill(color).frame(width: 7, height: 7)
+                Text("\(label) \(UsageFormatters.percent(value, of: total))")
+                    .foregroundStyle(.primary)
+            }
+            Text("\(UsageFormatters.compactCount(value)) tokens")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityHidden(true)
     }
 
     private var activitySection: some View {
         let metrics = model.currentMetrics
         return sectionSurface(title: "Activity", systemImage: "bolt.horizontal.circle") {
-            let columns = [GridItem(.flexible()), GridItem(.flexible())]
+            let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
             LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
                 StatTile(
+                    systemImage: "waveform.path.ecg",
                     label: "Requests",
                     value: "\(metrics.eventCount)",
-                    detail: "\(metrics.interactiveCount) interactive"
+                    detail: "Requests",
+                    color: .blue
                 )
                 StatTile(
-                    label: "Background agents",
+                    systemImage: "clock",
+                    label: "Background",
                     value: "\(metrics.headlessCount)",
-                    detail: "headless requests"
+                    detail: "Agents",
+                    color: .blue
                 )
                 StatTile(
+                    systemImage: "bolt.fill",
                     label: "Avg / request",
                     value: UsageFormatters.dollars(fromCents: metrics.averageCentsPerRequest),
-                    detail: "mean charge"
+                    detail: "Avg cost",
+                    color: .blue
                 )
                 StatTile(
+                    systemImage: "checkmark.circle",
                     label: "Cache reads",
                     value: UsageFormatters.percent(metrics.tokens.cacheRead, of: max(metrics.tokens.total, 1)),
-                    detail: "of all tokens"
+                    detail: "Cache",
+                    color: .cyan
                 )
-                if let busiest = model.busiestDay {
-                    StatTile(
-                        label: "Busiest day",
-                        value: busiestDayText(busiest.day),
-                        detail: "\(UsageFormatters.compactCount(busiest.tokenTotal)) tokens"
-                    )
-                }
             }
         }
     }
@@ -472,14 +523,17 @@ struct PanelView: View {
         }
     }
 
+    private var bottomAnalyticsGrid: some View {
+        HStack(alignment: .top, spacing: 12) {
+            hourHeatmapSection
+            modelsSection
+        }
+    }
+
     private var footer: some View {
         HStack {
-            Button {
-                model.showSettings = true
-            } label: {
-                Label("Settings", systemImage: "gearshape")
-            }
-            .buttonStyle(.plain)
+            Image(systemName: "chart.bar.fill")
+                .foregroundStyle(.secondary)
             Spacer()
             Toggle("Launch at login", isOn: Binding(
                 get: { model.preferences.launchAtLogin },
@@ -488,33 +542,43 @@ struct PanelView: View {
             .toggleStyle(.checkbox)
             .controlSize(.small)
             Button {
-                NSApplication.shared.terminate(nil)
+                model.showSettings = true
             } label: {
-                Label("Quit", systemImage: "power")
+                Label("Settings", systemImage: "chevron.right")
+                    .labelStyle(.titleAndIcon)
             }
             .buttonStyle(.plain)
-                .keyboardShortcut("q")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .font(.caption)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(.ultraThinMaterial)
     }
 
     private func sectionSurface<Content: View>(
         title: String,
         systemImage: String,
+        accessory: String? = nil,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label(title, systemImage: systemImage)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+            HStack {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Spacer()
+                if let accessory {
+                    Label(accessory, systemImage: "chevron.right")
+                        .labelStyle(.titleAndIcon)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             content()
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+        .glassCardBackground(radius: 16)
     }
 }
 
@@ -547,7 +611,7 @@ struct MetricCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+        .glassCardBackground(radius: 14)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value). \(subtitle)")
     }
@@ -556,46 +620,79 @@ struct MetricCard: View {
 struct SummaryChip: View {
     let label: String
     let value: String
+    let detail: String
     let systemImage: String
+    let color: Color
 
     var body: some View {
-        Label {
-            Text("\(label) \(value)")
-                .font(.caption.weight(.medium))
-                .monospacedDigit()
-        } icon: {
-            Image(systemName: systemImage)
+        HStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(color)
+                Image(systemName: systemImage)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 26, height: 26)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(value)
+                    .font(.headline.weight(.semibold))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 6)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.8), in: RoundedRectangle(cornerRadius: 8))
-        .accessibilityElement(children: .combine)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 9)
+        .frame(maxWidth: .infinity)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.white.opacity(0.35), lineWidth: 1)
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label): \(value), \(detail)")
     }
 }
 
 struct StatTile: View {
+    let systemImage: String
     let label: String
     let value: String
     let detail: String
+    let color: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.callout.weight(.semibold))
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Text(detail)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+        HStack(spacing: 7) {
+            Image(systemName: systemImage)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(color)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(value)
+                    .font(.callout.weight(.semibold))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Text(detail)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(8)
-        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .padding(.horizontal, 8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.white.opacity(0.32), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value), \(detail)")
     }
@@ -606,21 +703,52 @@ struct TokenSplitBar: View {
 
     var body: some View {
         let total = max(tokens.total, 1)
+        let cache = tokens.cacheWrite + tokens.cacheRead
         GeometryReader { geo in
-            HStack(spacing: 1) {
-                barSegment(tokens.input, total, .blue, width: geo.size.width)
-                barSegment(tokens.output, total, .green, width: geo.size.width)
-                barSegment(tokens.cacheWrite, total, .orange, width: geo.size.width)
-                barSegment(tokens.cacheRead, total, .purple, width: geo.size.width)
+            HStack(spacing: 0) {
+                labeledBarSegment(tokens.input, total, .blue, "Input", width: geo.size.width)
+                labeledBarSegment(tokens.output, total, .cyan, "Output", width: geo.size.width)
+                labeledBarSegment(cache, total, .gray, "Cache", width: geo.size.width)
             }
         }
-        .frame(height: 8)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .frame(height: 30)
+        .clipShape(RoundedRectangle(cornerRadius: 7))
     }
 
-    private func barSegment(_ value: Int, _ total: Int, _ color: Color, width: CGFloat) -> some View {
-        color
-            .frame(width: max(width * CGFloat(value) / CGFloat(total), value > 0 ? 2 : 0))
+    private func labeledBarSegment(_ value: Int, _ total: Int, _ color: Color, _ label: String, width: CGFloat) -> some View {
+        let segmentWidth = max(width * CGFloat(value) / CGFloat(total), value > 0 ? 20 : 0)
+        return ZStack {
+            color
+            if segmentWidth > 36 {
+                Text(UsageFormatters.percent(value, of: total))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .frame(width: segmentWidth)
+        .accessibilityLabel("\(label) \(UsageFormatters.percent(value, of: total))")
+    }
+}
+
+private extension View {
+    func glassCardBackground(radius: CGFloat = 16) -> some View {
+        self
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: radius))
+            .overlay(
+                RoundedRectangle(cornerRadius: radius)
+                    .stroke(.white.opacity(0.42), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.08), radius: 12, y: 5)
+    }
+
+    func glassButtonBackground(radius: CGFloat = 11) -> some View {
+        self
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: radius))
+            .overlay(
+                RoundedRectangle(cornerRadius: radius)
+                    .stroke(.white.opacity(0.36), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
     }
 }
 
