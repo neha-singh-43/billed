@@ -7,9 +7,8 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-            Divider()
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 14) {
                     sessionSection
                     providersSection
                     displaySection
@@ -17,29 +16,41 @@ struct SettingsView: View {
                     startupSection
                     privacySection
                 }
-                .padding(16)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
             }
-            Divider()
             footer
         }
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var header: some View {
-        HStack {
-            Button("← Back") { model.showSettings = false }
-                .buttonStyle(.plain)
-                .font(.body)
-            Spacer()
-            Text("Settings")
-                .font(.headline)
+        HStack(spacing: 10) {
+            Button {
+                model.showSettings = false
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .background(Color.secondary.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Settings")
+                    .font(.headline.weight(.semibold))
+                Text("Providers and menu bar behavior")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 
     private var sessionSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Active provider")
+        settingsSection("Active provider", systemImage: "checkmark.seal") {
             Label(connectionText, systemImage: connectionIcon)
                 .font(.caption)
                 .foregroundStyle(model.authStatus.source == .none ? .red : .secondary)
@@ -75,8 +86,7 @@ struct SettingsView: View {
     }
 
     private var providersSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Provider settings")
+        settingsSection("Provider settings", systemImage: "square.grid.2x2") {
             ForEach(ServiceProvider.allCases) { provider in
                 providerRow(provider)
             }
@@ -146,8 +156,7 @@ struct SettingsView: View {
     }
 
     private var displaySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Menu bar display")
+        settingsSection("Menu bar display", systemImage: "menubar.rectangle") {
             Picker("Unit", selection: Binding(
                 get: { model.preferences.menuBarUnit },
                 set: { newValue in
@@ -168,8 +177,7 @@ struct SettingsView: View {
     }
 
     private var refreshSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Refresh")
+        settingsSection("Refresh", systemImage: "arrow.clockwise") {
             Stepper(
                 "Interval: \(model.preferences.refreshIntervalMinutes) min",
                 value: Binding(
@@ -186,8 +194,7 @@ struct SettingsView: View {
     }
 
     private var startupSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Startup")
+        settingsSection("Startup", systemImage: "poweron") {
             Toggle("Launch at login", isOn: Binding(
                 get: { model.preferences.launchAtLogin },
                 set: { model.setLaunchAtLogin($0) }
@@ -197,8 +204,7 @@ struct SettingsView: View {
     }
 
     private var privacySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Privacy")
+        settingsSection("Privacy", systemImage: "lock.shield") {
             Text("Usage data stays on this Mac. Local app credentials and state are read on demand and are never stored by Billed.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -211,11 +217,23 @@ struct SettingsView: View {
             Button("Done") { model.showSettings = false }
                 .keyboardShortcut(.defaultAction)
         }
-        .padding(12)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 
-    private func sectionTitle(_ text: String) -> some View {
-        Text(text)
-            .font(.subheadline.weight(.semibold))
+    private func settingsSection<Content: View>(
+        _ title: String,
+        systemImage: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+            content()
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
     }
 }
