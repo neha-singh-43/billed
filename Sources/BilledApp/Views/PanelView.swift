@@ -40,8 +40,8 @@ struct PanelView: View {
                         teamPoolBanner(pool)
                     }
                     tokenSplitSection
-                    activitySection
                     trendSection
+                    activitySection
                     hourHeatmapSection
                     modelsSection
                 }
@@ -212,9 +212,9 @@ struct PanelView: View {
         Label(text, systemImage: "person.3.fill")
             .font(.caption)
             .foregroundStyle(.secondary)
-            .padding(8)
+            .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
+            .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
     }
 
     @ViewBuilder
@@ -331,9 +331,7 @@ struct PanelView: View {
     private var tokenSplitSection: some View {
         let t = model.currentMetrics.tokens
         let total = max(t.total, 1)
-        return VStack(alignment: .leading, spacing: 8) {
-            Text("Token split")
-                .font(.subheadline.weight(.semibold))
+        return sectionSurface(title: "Token split", systemImage: "circle.hexagongrid.fill") {
             TokenSplitBar(tokens: t)
                 .accessibilityLabel("Token split: input \(UsageFormatters.percent(t.input, of: total)), output \(UsageFormatters.percent(t.output, of: total)), cache write \(UsageFormatters.percent(t.cacheWrite, of: total)), cache read \(UsageFormatters.percent(t.cacheRead, of: total))")
             HStack(spacing: 12) {
@@ -356,9 +354,7 @@ struct PanelView: View {
 
     private var activitySection: some View {
         let metrics = model.currentMetrics
-        return VStack(alignment: .leading, spacing: 8) {
-            Text("Activity")
-                .font(.subheadline.weight(.semibold))
+        return sectionSurface(title: "Activity", systemImage: "bolt.horizontal.circle") {
             let columns = [GridItem(.flexible()), GridItem(.flexible())]
             LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
                 StatTile(
@@ -399,10 +395,8 @@ struct PanelView: View {
     }
 
     private var trendSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        sectionSurface(title: "Daily trend", systemImage: "chart.bar.xaxis") {
             HStack {
-                Text("Daily trend")
-                    .font(.subheadline.weight(.semibold))
                 Spacer()
                 Picker("Trend metric", selection: $model.trendMetric) {
                     ForEach(AppModel.TrendMetric.allCases) { metric in
@@ -420,9 +414,7 @@ struct PanelView: View {
     private var hourHeatmapSection: some View {
         let activity = model.hourlyActivity
         let peak = activity.map(\.requestCount).max() ?? 0
-        return VStack(alignment: .leading, spacing: 8) {
-            Text("Time of day")
-                .font(.subheadline.weight(.semibold))
+        return sectionSurface(title: "Time of day", systemImage: "clock") {
             if peak == 0 {
                 Text("No usage in this range")
                     .font(.caption)
@@ -440,10 +432,8 @@ struct PanelView: View {
         let maxRequests = sorted.map(\.requestCount).max() ?? 1
         let maxEfficiency = sorted.map(\.centsPerMillionTokens).max() ?? 1
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return sectionSurface(title: "Models", systemImage: "cpu") {
             HStack {
-                Text("Models")
-                    .font(.subheadline.weight(.semibold))
                 Spacer()
                 Picker("Sort", selection: $model.modelSort) {
                     ForEach(AppModel.ModelSort.allCases) { sort in
@@ -509,6 +499,22 @@ struct PanelView: View {
         .padding(.vertical, 10)
         .font(.caption)
         .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    private func sectionSurface<Content: View>(
+        title: String,
+        systemImage: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+            content()
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -589,7 +595,7 @@ struct StatTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
-        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
+        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value), \(detail)")
     }
@@ -639,7 +645,7 @@ struct ModelRowView: View {
             }
             GeometryReader { geo in
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.accentColor.opacity(0.35))
+                    .fill(Color.accentColor.opacity(0.45))
                     .frame(width: geo.size.width * barFraction)
             }
             .frame(height: 4)
